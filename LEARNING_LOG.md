@@ -124,3 +124,38 @@ Am trecut de la `gemini-3.5-flash` la `gemini-3.5-flash-lite`.
 - Warning-ul „LF will be replaced by CRLF” e inofensiv. Windows și Linux marchează finalul de rând diferit
   (CRLF vs LF), iar git face conversia automat.
 - Git nu urmărește foldere goale, doar fișiere. De aceea am pus `results/.gitkeep`.
+
+---
+
+## Pasul 2 – Documentele interne fictive (2026-11-03)
+
+### Ce am făcut
+Am creat 3 documente în engleză, în `docs/`, pentru firma fictivă **Contoso Business Services**:
+
+| Fișier | ID | Conținut principal |
+|---|---|---|
+| `leave_policy.md` | HR-POL-004 | Zile de concediu, preaviz, aprobare, reportare, concediu medical, concedii speciale |
+| `it_incident_reporting.md` | IT-PRO-012 | Canale de raportare, priorități P1–P4 cu timpi de răspuns, securitate, escaladare |
+| `onboarding_guide.md` | HR-GUI-002 | Înainte de prima zi, programul primei zile, trainingurile, perioada de probă, cine ce face |
+
+### De ce așa
+- **Detalii concrete și verificabile** (24 de zile, 15 minute, interior 3100, 31 martie): fără date
+  precise nu pot verifica automat dacă agentul a răspuns corect.
+- **Goluri intenționate:** documentele pomenesc politici care NU există la noi (HR-POL-007 concediu parental,
+  HR-POL-010 muncă hibrid, IT Service Catalogue). Din ele fac întrebări capcană, ca să văd dacă agentul
+  spune „nu știu” sau inventează.
+- **Răspunsuri care depind de context** (normă, vechime, prioritatea incidentului): din ele fac întrebările
+  ambigue.
+- **Trimiteri între documente:** onboarding-ul trimite la politica de concedii și la procedura IT. Asta testează
+  dacă agentul combină și citează **mai multe surse**.
+- **Metadate (ID, versiune, dată, responsabil):** permit citări precise și seamănă cu coloanele unei biblioteci
+  de documente SharePoint.
+- **Contoso + domeniul `.example`:** Contoso e firma fictivă din documentația Microsoft. `.example` e un domeniu
+  rezervat oficial, deci emailurile nu pot aparține nimănui. Nu am folosit numele unei firme reale.
+
+### Alternative luate în calcul
+- **Documente reale de pe internet:** n-aș fi controlat ce conțin și ce lipsește, deci n-aș fi putut construi
+  capcanele intenționat. În plus, pot fi probleme de drepturi de autor.
+- **Documente generate fără planificare:** ar fi ieșit vagi și greu de testat.
+- **Formate PDF/Word:** mai realiste, dar ar fi cerut o etapă de extragere a textului. Markdown e text simplu,
+  cu structură (titluri, tabele) pe care modelul o înțelege bine.
