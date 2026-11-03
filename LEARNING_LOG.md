@@ -159,3 +159,40 @@ Am creat 3 documente în engleză, în `docs/`, pentru firma fictivă **Contoso 
 - **Documente generate fără planificare:** ar fi ieșit vagi și greu de testat.
 - **Formate PDF/Word:** mai realiste, dar ar fi cerut o etapă de extragere a textului. Markdown e text simplu,
   cu structură (titluri, tabele) pe care modelul o înțelege bine.
+
+---
+
+## Pasul 3 (3.1–3.3) + Pasul 4 – Agentul și promptul V1 (2026-11-03)
+
+### Ce am făcut
+- **3.1** `load_documents()` citește toate fișierele `.md` din `docs/` într-un dicționar {nume fișier: text}.
+- **4** `prompts/v1.txt`: un prompt intenționat simplu (baseline), cu 4 reguli: rol, doar din documente,
+  citează sursa, spune „I don't know”.
+- **3.2** `build_system_instruction()` pune regulile + documentele (în etichete `<document name="...">`) în promptul
+  de sistem. `ask_gemini()` trimite întrebarea la `gemini-3.5-flash-lite` cu `temperature=0`
+  și reîncearcă la erorile 429/500/503 (exponential backoff: 5s, 10s, 20s).
+- **3.3** `is_unanswered()` caută „I don't know” în răspuns. `log_unanswered()` adaugă întrebarea în
+  `results/unanswered.csv` (timestamp, question, prompt_version, status=New).
+
+### De ce
+- **Grounding, nu antrenare:** modelul nu e modificat. Primește documentele ca context la fiecare întrebare.
+  Avantaje: documentele se pot actualiza oricând, agentul poate cita sursa, costă puțin.
+  (Gemini nu ține minte nimic între apeluri, de aceea trimitem documentele de fiecare dată.)
+- **Toate documentele în prompt (fără RAG):** ~2.500 de tokeni, mult sub limita modelului. RAG devine necesar la sute de documente.
+- **`temperature=0`:** răspunsuri cât mai stabile între rulări, deci teste reproductibile.
+- **Promptul în fișier separat:** V1 și V2 pot fi comparate fără să schimb codul.
+- **`unanswered.csv`:** întrebările fără răspuns arată ce lipsește din documentație.
+
+### Probleme observate deja în V1 (testare exploratorie)
+1. **Refuz fără expresia exactă** – „How many days of parental leave?”: n-a inventat, dar n-a spus „I don't know”,
+   deci întrebarea NU a fost salvată în CSV (fals negativ).
+2. **Răspuns înrudit, dar irelevant** – „Where do I get my salary?”: a răspuns cu „încarcă datele bancare cu 3 zile
+   înainte”. Faptul e adevărat, dar nu răspunde la întrebare, și nici nu a fost salvată în CSV.
+   Mai periculos decât o halucinație clasică, pentru că are sursă și sună credibil.
+3. **Citare vagă** – „Leave Policy” în loc de „HR-POL-004, secțiunea 4”.
+4. Observație pozitivă: înțelege și întrebări cu greșeli de tipar („salay”).
+
+### Alternative luate în calcul
+- **Fine-tuning:** scump, iar informația se învechește. Nu poate cita sursa.
+- **Detectarea „nu știu” cu un al doilea apel LLM:** mai robustă, dar dublează costul și numărul de apeluri.
+  Încep cu varianta simplă și o îmbunătățesc doar dacă testele arată că e nevoie.
