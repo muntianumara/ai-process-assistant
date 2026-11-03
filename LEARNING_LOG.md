@@ -104,3 +104,23 @@ Am trecut de la `gemini-3.5-flash` la `gemini-3.5-flash-lite`.
 - **Compromis:** un model „lite” poate respecta mai slab instrucțiunile din prompt (de ex. „răspunde doar din
   documente”). Pentru proiect asta e chiar util: V1 va avea probabil mai multe erori vizibile, iar
   îmbunătățirea din V2 se va putea măsura mai clar.
+
+---
+
+## Git: versionarea proiectului (2026-11-03)
+
+### Ce am făcut
+- `git init -b main` a creat repository-ul local, cu ramura principală numită `main`.
+- Am setat autorul commiturilor (`git config --global user.name / user.email`).
+- Primul commit: „Step 1: project structure and Gemini setup”.
+- Am verificat cu `git status` că `.venv` NU apare, deci `.gitignore` funcționează.
+
+### De ce
+- **Istoric clar:** câte un commit pe pas arată cum a evoluat proiectul (structură, documente, agent, V1, V2).
+- **Prompturile versionate:** diferența dintre `prompts/v1.txt` și `v2.txt` se vede direct în git.
+- **Siguranță:** pot reveni oricând la o versiune care mergea.
+
+### De reținut
+- Warning-ul „LF will be replaced by CRLF” e inofensiv. Windows și Linux marchează finalul de rând diferit
+  (CRLF vs LF), iar git face conversia automat.
+- Git nu urmărește foldere goale, doar fișiere. De aceea am pus `results/.gitkeep`.
