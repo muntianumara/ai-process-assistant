@@ -12,6 +12,9 @@ Run:
 Uses prompts/v1.txt and saves:
     results/run_v1.csv      every question, answer and verdict
     results/summary_v1.md   scores per category + disagreements + failed tests
+
+Re-judge only the rows where the judge failed (ERROR), without asking the agent again:
+    python src/evaluate.py v1 --rejudge
 """
 
 import csv
@@ -272,6 +275,31 @@ def write_summary(prompt_version, scores, results):
     return summary_file
 
 
+def load_saved_results(prompt_version):
+    """Read results/run_<version>.csv back into a list of dictionaries."""
+    with open(RESULTS_FOLDER / f"run_{prompt_version}.csv", newline="", encoding="utf-8") as file:
+        results = list(csv.DictReader(file))
+    for r in results:
+        # CSV stores everything as text: turn "True"/"False" back into True/False
+        r["auto_pass"] = r["auto_pass"] == "True"
+    return results
+
+
+def rejudge_errors(prompt_version):
+    """Send to the judge again only the saved rows whose verdict is ERROR."""
+    results = load_saved_results(prompt_version)
+    client = genai.Client()
+    judge_instruction = build_judge_instruction(load_documents())
+
+    to_rejudge = [r for r in results if r["judge_verdict"] == "ERROR"]
+    print(f"Re-judging {len(to_rejudge)} answer(s) with verdict ERROR\n")
+    for r in to_rejudge:
+        grade_with_judge(client, judge_instruction, r)
+        print(f"{r['id']}: {r['judge_verdict']} - {r['judge_reason'][:100]}")
+        time.sleep(JUDGE_PAUSE_SECONDS)
+    return results
+
+
 def save_results(results, prompt_version):
     """Write all results to results/run_<version>.csv and return the file path."""
     output_file = RESULTS_FOLDER / f"run_{prompt_version}.csv"
@@ -283,11 +311,16 @@ def save_results(results, prompt_version):
 
 
 if __name__ == "__main__":
-    prompt_version = sys.argv[1] if len(sys.argv) > 1 else "v1"
-    print(f"Evaluating prompt {prompt_version} with model {MODEL}\n")
+    # Arguments: the prompt version (e.g. v1) and the optional flag --rejudge
+    arguments = [a for a in sys.argv[1:] if not a.startswith("--")]
+    prompt_version = arguments[0] if arguments else "v1"
 
-    test_cases = load_test_cases()
-    results = run_agent_on_tests(prompt_version, test_cases)
+    if "--rejudge" in sys.argv:
+        results = rejudge_errors(prompt_version)
+    else:
+        print(f"Evaluating prompt {prompt_version} with model {MODEL}\n")
+        results = run_agent_on_tests(prompt_version, load_test_cases())
+
     output_file = save_results(results, prompt_version)
 
     scores = compute_scores(results)

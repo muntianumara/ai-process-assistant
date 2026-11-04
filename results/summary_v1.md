@@ -1,6 +1,6 @@
 # Evaluation summary - prompt v1
 
-- Date: 2026-11-04 13:40
+- Date: 2026-11-04 14:37
 - Agent model: `gemini-3.5-flash-lite`
 - Judge model: `gemma-4-31b-it`
 
@@ -9,9 +9,9 @@
 | Category | Questions | Automatic check | LLM judge |
 |---|---|---|---|
 | normal | 12 | 12/12 (100%) | 12/12 (100%) |
-| trap | 4 | 2/4 (50%) | 1/2 (50%), 2 error(s) |
-| ambiguous | 4 | 4/4 (100%) | 2/2 (100%), 2 error(s) |
-| TOTAL | 20 | 18/20 (90%) | 15/16 (94%), 4 error(s) |
+| trap | 4 | 2/4 (50%) | 3/4 (75%) |
+| ambiguous | 4 | 4/4 (100%) | 4/4 (100%) |
+| TOTAL | 20 | 18/20 (90%) | 19/20 (95%) |
 
 ## Disagreements between the two methods
 

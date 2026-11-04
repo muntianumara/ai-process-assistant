@@ -31,7 +31,7 @@ UNANSWERED_FILE = PROJECT_ROOT / "results" / "unanswered.csv"
 NO_ANSWER_PHRASE = "i don't know"
 
 MODEL = "gemini-3.5-flash-lite"   # pinned version, so test runs stay comparable
-PROMPT_VERSION = "v1"             # which file from prompts/ to use
+PROMPT_VERSION = "v3"             # which file from prompts/ to use (v3 = best evaluated version)
 
 
 # --- 3.1 Load the documents ------------------------------------------------

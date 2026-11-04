@@ -312,3 +312,61 @@ Totalul de 90% ascunde exact cea mai gravă problemă, de aceea raportez pe cate
 - **Doar LLM judge:** înțelege sensul, dar e inconsecvent, lent și uneori indisponibil.
 - **Evaluare doar umană:** cea mai sigură, dar nu scalează. Folosesc omul doar pe dezacorduri.
 - **Același model ca judge:** risc de auto-favorizare.
+
+---
+
+## Pasul 7 – Analiza erorilor și îmbunătățirea promptului: V1 → V2 → V3 (2026-11-04)
+
+### Ce am făcut
+1. **`--rejudge`**: re-evaluez doar rândurile unde judge-ul a avut eroare de server, fără să întreb agentul din nou
+   (răspunsurile analizate rămân aceleași).
+2. **Analiza erorilor V1** – refuzuri greșite: niciunul. Erori:
+   E1 T01 trimite la alt document fără „I don't know” (nu ajunge în unanswered.csv);
+   E2 T02 fapt înrudit prezentat ca răspuns (salariu → date bancare);
+   E3 citare inconsecventă; E4 sursă greșit atribuită (A01, într-o rulare).
+   Cauza comună: V1 spune CE să facă, dar nu definește CÂND un răspuns „nu e în documente”.
+3. **V2**: reguli explicite pentru „I don't know” (inclusiv informații doar înrudite), format fix de citare
+   `[Titlu, ID, section N]`, regulă pentru situații. Fiecare schimbare legată de o eroare observată.
+4. **V3**: ordine de decizie A (răspunde) → B (întrebare vagă / depinde de situație: listează variantele și întreabă)
+   → C („I don't know”). Trimitere la alt document doar dacă un document numește explicit subiectul.
+5. **`src/compare.py`**: generează `results/comparison_vX_vs_vY.md` din rezultatele salvate: scoruri, întrebările
+   reparate/stricate și diferența exactă între prompturi (`difflib`).
+
+### Rezultate (verificare automată / judge)
+| | V1 | V2 | V3 |
+|---|---|---|---|
+| normal | 100% / 100% | 100% / 100% | 100% / 100% |
+| trap | **50%** / 75% | 100% / 75% | 100% / 100% |
+| ambiguous | 100% / 100% | **75%** / **75%** | 100% / 100% |
+| total | 90% / 95% | 95% / 90% | **100% / 100%** |
+
+### Ce am învățat
+- **O schimbare de prompt poate repara o eroare și crea alta.** V2 a reparat T01 și T02, dar a introdus:
+  - T04: **halucinație nouă** („VPN e menționat în procedura IT” – fals), cauzată de permisiunea de a pomeni alt document.
+    Doar judge-ul a prins-o, pentru că răspunsul conținea „I don't know”;
+  - A03: **refuz greșit** (supra-prudență) la o întrebare vagă, dar la care se putea răspunde.
+  → Le-am văzut doar pentru că am rulat din nou TOT setul (testare de regresie).
+- **Ordinea contează în prompt:** o excepție pusă la finalul unei reguli n-a funcționat. O ordine de decizie
+  explicită (A → B → C) a funcționat.
+- **Smoke test înainte de rularea lungă:** 3 întrebări (~1 minut) au arătat că primul draft V3 nu repara A03,
+  și că agentul scria eticheta internă „CASE B” în răspuns. Am corectat înainte de rularea de 40 de minute.
+- **Am evitat overfitting-ul:** nu am copiat în prompt exemple din teste (de ex. „dacă te întreabă pe cine să contacteze…”).
+- **Limita onestă:** V2 și V3 au fost scrise privind erorile pe ACELEAȘI 20 de întrebări, deci 100% e optimist.
+  Corect ar fi un set nou de întrebări („held-out”), nefolosit la scrierea promptului.
+- Agentul folosește acum `PROMPT_VERSION = "v3"`, cea mai bună versiune evaluată.
+
+---
+
+## Pasul 8 – README.md (2026-11-04)
+
+### Ce am făcut
+README în engleză, pentru cine descoperă proiectul pe GitHub: problem, solution, architecture (diagramă text + tabel fișiere),
+how to run, test methodology, results V1/V2/V3, limitations, legătura cu SharePoint/Power Automate/Copilot Studio,
+next steps.
+
+### De ce așa
+- Începe cu rezumatul și accentul pe **testare**, ce diferențiază proiectul de un simplu chatbot.
+- Rezultatele sunt cifre măsurate, cu povestea erorilor și a regresiilor, nu doar scorul final.
+- **Limitările sunt scrise deschis** (test set mic, prompt optimizat pe test set, judge inconsecvent, free tier).
+  E mai convingător să le prezint eu decât să le descopere cititorul.
+- Secțiunea Microsoft 365 leagă proiectul de uneltele Microsoft 365 (SharePoint, Power Automate, Copilot Studio).
