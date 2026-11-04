@@ -63,8 +63,12 @@ def build_system_instruction(prompt_text, documents):
     return "\n".join(parts)
 
 
-def ask_gemini(client, system_instruction, question, max_attempts=4):
+def ask_gemini(client, system_instruction, question, model=MODEL, json_output=False,
+               max_attempts=4):
     """Send one question to Gemini and return the text of the answer.
+
+    model       - which Gemini model to use (the judge in evaluate.py uses another one)
+    json_output - True asks Gemini to reply with JSON only (used by the judge)
 
     Free-tier servers are sometimes busy (error 503) or we send too many
     requests (error 429). In those cases we wait and try again, doubling the
@@ -74,11 +78,12 @@ def ask_gemini(client, system_instruction, question, max_attempts=4):
     for attempt in range(1, max_attempts + 1):
         try:
             response = client.models.generate_content(
-                model=MODEL,
+                model=model,
                 contents=question,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
                     temperature=0,  # least random answers -> more reproducible tests
+                    response_mime_type="application/json" if json_output else None,
                 ),
             )
             return response.text.strip()

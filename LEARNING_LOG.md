@@ -257,3 +257,58 @@ Coloane: `id, category, question, expected_answer, expected_source, must_contain
   20 e suficient pentru un prototip.
 - **Întrebări generate automat de un LLM:** rapid, dar baremul ar trebui oricum verificat de un om, iar capcanele n-ar fi
   gândite pe golurile reale din documente.
+
+---
+
+## Pasul 6 – Evaluarea automată: `src/evaluate.py` (2026-11-04)
+
+### Ce am făcut
+- **6.1** Rulez agentul pe toate cele 20 de întrebări, refolosind funcțiile din `agent.py` (testez exact codul real).
+  Pauză de 4 s între apeluri. O eroare la o întrebare nu oprește rularea (se notează „ERROR”).
+- **6.2** Verificare automată: `check_keywords()` (`;` = toate obligatorii, `|` = variante) și `check_sources()`
+  (acceptă numele fișierului, titlul sau ID-ul documentului). La capcane contează doar „I don't know”.
+- **6.3** LLM-as-judge: un al doilea model primește rubrica (`prompts/judge.txt`), documentele, baremul și răspunsul,
+  și întoarce JSON `{"reason": ..., "verdict": PASS/FAIL}`.
+- **6.4** Scoruri pe categorii pentru ambele metode, lista dezacordurilor și a testelor picate:
+  `results/run_v1.csv` (detalii) și `results/summary_v1.md` (rezumat).
+
+### Rezultat V1
+| Categorie | Verificare automată | LLM judge |
+|---|---|---|
+| normal | 12/12 (100%) | 12/12 (100%) |
+| trap | **2/4 (50%)** | 1/2 (50%), 2 erori |
+| ambiguous | 4/4 (100%) | 2/2 (100%), 2 erori |
+| TOTAL | 18/20 (90%) | 15/16 (94%), 4 erori |
+
+V1 e foarte bun la întrebări directe, dar pică jumătate din capcane (T01 concediu parental, T02 salariu).
+Totalul de 90% ascunde exact cea mai gravă problemă, de aceea raportez pe categorii.
+
+### LLM-as-judge: avantaje și limite (văzute în practică)
+- ✅ **A prins ce n-au prins cuvintele-cheie:** într-o rulare, la A01 agentul a atribuit regula perioadei de probă
+  documentului greșit. Verificarea automată a dat PASS, judge-ul FAIL, cu motivul corect.
+- ✅ Judecă nuanțat (N09: a observat un detaliu lipsă, dar a considerat răspunsul suficient).
+- ⚠️ **Nu e consecvent:** T01 a primit FAIL (Gemini Flash), apoi PASS (Gemma), pe același tip de răspuns.
+  Cauza: rubrica e ambiguă pentru „trimite la alt document, dar nu spune «nu știu»”. Decizia finală e umană: FAIL,
+  pentru că întrebarea nu ajunge în `unanswered.csv`.
+- ⚠️ Costă apeluri în plus și depinde de disponibilitatea serverelor.
+
+### Alegerea modelului pentru judge (decizie din date)
+- `gemini-3.5-flash`: blocat după **20 de cereri/zi** (limita free tier). În plus, cererile erau contorizate la
+  `gemini-3.6-flash`, deci Google redirecționează în fundal → nici un nume „fixat” nu garantează modelul.
+- **`gemma-4-31b-it`** (ales): 14.400 de cereri/zi, altă familie decât agentul (mai puțină auto-favorizare),
+  model deschis (poate rula și pe serverele unei firme). Dezavantaje: limită de 16K tokeni/minut (pauză de 15 s),
+  servere instabile (multe erori 500/503, 4 evaluări eșuate), rulare de ~40 de minute.
+- Judge-ul are 6 reîncercări (5, 10, 20, 40, 80 s). Erorile nu se numără ca FAIL, ci se raportează separat.
+
+### Alte lecții
+- **Non-determinism:** chiar cu `temperature=0`, agentul a răspuns diferit la A01 între două rulări.
+  La 20 de întrebări, o întrebare = 5% din scor, deci diferențele mici între versiuni pot fi zgomot.
+- **Am testat logica de scoring separat**, pe răspunsurile salvate și cu verdicte inventate, înainte de rularea lungă.
+  Așa nu am pierdut timp și cotă API pe o greșeală de cod.
+- **Problema CSV + Excel în România:** Excel așteaptă `;` ca separator. Import prin Data → From Text/CSV, cu UTF-8.
+
+### Alternative luate în calcul
+- **Doar verificare automată:** rapidă și gratuită, dar „oarbă” la sens (a ratat A01).
+- **Doar LLM judge:** înțelege sensul, dar e inconsecvent, lent și uneori indisponibil.
+- **Evaluare doar umană:** cea mai sigură, dar nu scalează. Folosesc omul doar pe dezacorduri.
+- **Același model ca judge:** risc de auto-favorizare.
