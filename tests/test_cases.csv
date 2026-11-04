@@ -1,0 +1,21 @@
+id,category,question,expected_answer,expected_source,must_contain
+N01,normal,"How many days of paid annual leave does a full-time employee get?","24 working days per calendar year.",leave_policy.md,24
+N02,normal,"I want to take 5 days off in a row. How far in advance must I submit the request?","At least 10 working days in advance (leave of 3 or more consecutive days).",leave_policy.md,10
+N03,normal,"Until when can I use the leave days I carried over from last year?","By 31 March; after that they are lost.",leave_policy.md,31 March
+N04,normal,"When do I need a medical certificate for sick leave?","For absences longer than 2 consecutive working days.",leave_policy.md,2|two
+N05,normal,"How many paid days off do I get for my own wedding?","5 days of special paid leave.",leave_policy.md,5|five
+N06,normal,"What is the internal phone extension of the IT Service Desk?","Extension 3100 (for P1/P2 incidents or if portal/e-mail are not accessible).",it_incident_reporting.md,3100
+N07,normal,"What is the target resolution time for a P1 incident?","4 hours (first response within 15 minutes).",it_incident_reporting.md,4 hours|four hours
+N08,normal,"What should I do if I receive a suspicious phishing email?","Do not click links or open attachments; use the Report Phishing button in Outlook or forward it to security@contoso-bs.example.",it_incident_reporting.md,Report Phishing|security@contoso-bs.example
+N09,normal,"My laptop was stolen. How quickly must I report it and how?","Within 1 hour, by phone (extension 3100); it is always a P1 incident.",it_incident_reporting.md,1 hour|one hour;3100
+N10,normal,"What time should I arrive on my first day and where?","At 09:00 at the reception in Building B, ground floor, with your ID card.",onboarding_guide.md,09:00|9:00|9 am|9 AM;Building B
+N11,normal,"Which mandatory trainings must I complete in my first week?","Information Security Basics, GDPR and Data Protection, Health and Safety at Work - within the first 5 working days.",onboarding_guide.md,Information Security;GDPR;Health and Safety
+N12,normal,"Can I take annual leave during my probation period?","Yes, up to 5 days, with the approval of your line manager.",onboarding_guide.md,5|five
+T01,trap,"How many days of parental leave do I get?","I don't know - only mentioned as a separate policy (HR-POL-007) that is not available.",,I don't know
+T02,trap,"Where do I get my salay?","I don't know - salary payment is not covered by the documents.",,I don't know
+T03,trap,"How many days per week can I work from home?","I don't know - the Hybrid Work Policy (HR-POL-010) is not available.",,I don't know
+T04,trap,"How do I set up the VPN on my laptop?","I don't know - VPN setup is not covered by the documents.",,I don't know
+A01,ambiguous,"How many days of leave do I have?","Depends: 24 days for full-time, pro rata for part-time (e.g. 12 days for 20 h/week), plus 1 extra day per 5 years of service up to 27; special leave is separate.",leave_policy.md,24;part-time
+A02,ambiguous,"How quickly will IT fix my problem?","Depends on the priority set by IT: P1 4 hours, P2 8 business hours, P3 3 business days, P4 10 business days.",it_incident_reporting.md,P1;P4
+A03,ambiguous,"Who should I contact if I have a problem?","Depends on the problem: IT Service Desk for technical issues (extension 3100), HR Service Desk for HR topics (extension 2400), line manager or buddy for day-to-day questions.",it_incident_reporting.md;leave_policy.md;onboarding_guide.md,IT Service Desk;HR
+A04,ambiguous,"How many days do I have to submit the document?","Depends on the document: medical certificate within 5 working days after return; special leave proof within 30 days; ID and bank details at least 3 working days before the first day.",leave_policy.md;onboarding_guide.md,5;30

@@ -196,3 +196,64 @@ Am creat 3 documente în engleză, în `docs/`, pentru firma fictivă **Contoso 
 - **Fine-tuning:** scump, iar informația se învechește. Nu poate cita sursa.
 - **Detectarea „nu știu” cu un al doilea apel LLM:** mai robustă, dar dublează costul și numărul de apeluri.
   Încep cu varianta simplă și o îmbunătățesc doar dacă testele arată că e nevoie.
+
+---
+
+## Pasul 3.4 – Legătura cu Power Automate și Microsoft Lists (2026-11-04)
+
+### Ce reprezintă proiectul în Microsoft 365
+| Proiectul meu | Echivalent în Microsoft 365 |
+|---|---|
+| `docs/` | Bibliotecă de documente SharePoint |
+| `agent.py` + `prompts/v1.txt` | Agent Copilot Studio (SharePoint ca knowledge source + instructions) |
+| `is_unanswered()` | Ramura „nu am găsit răspuns” din agent, care pornește un flux |
+| `log_unanswered()` → CSV | Flux Power Automate: acțiunea „Create item” într-o listă Microsoft Lists |
+| coloana `status` (New) | Coloană Choice în listă: New / In progress / Answered |
+
+### Bucla închisă
+Întrebare fără răspuns → item în listă + notificare Teams către HR → HR completează documentul în SharePoint →
+agentul poate răspunde data viitoare. Indicator util: **% întrebări fără răspuns pe lună** (dacă scade,
+documentația se îmbunătățește).
+
+### De ce CSV în proiect
+Nu am nevoie de o licență Microsoft 365 de firmă. Structura datelor e aceeași, deci pentru varianta reală
+schimb doar interiorul lui `log_unanswered()` (trimite datele către un flux Power Automate în loc de CSV).
+
+---
+
+## Pasul 5 – Setul de teste (2026-11-04)
+
+### Ce am făcut
+`tests/test_cases.csv` cu 20 de întrebări:
+
+| Categorie | Câte | Ce verifică | Comportament corect |
+|---|---|---|---|
+| normal (N01–N12) | 12 | Găsește informația corectă din toate cele 3 documente | Răspuns exact + sursa corectă |
+| trap (T01–T04) | 4 | Inventează când nu știe? (concediu parental, salariu, muncă de acasă, VPN) | „I don't know” |
+| ambiguous (A01–A04) | 4 | Observă că răspunsul depinde de situație? | Prezintă variantele sau cere detalii |
+
+Coloane: `id, category, question, expected_answer, expected_source, must_contain`.
+- `expected_answer`: răspunsul corect, pentru oameni.
+- `must_contain`: cuvinte-cheie pentru verificarea automată (`;` = toate obligatorii, `|` = variante acceptate).
+
+### De ce
+- **Set fix de întrebări (golden dataset):** V1 și V2 sunt testate pe exact aceleași întrebări, deci diferența de scor vine
+  doar din prompt.
+- **Baremul scris din documente, NU din răspunsurile agentului:** altfel aș testa agentul cu el însuși și i-aș accepta
+  greșelile. Sursa de adevăr e documentul.
+- **Review manual al baremului:** am verificat câteva răspunsuri așteptate direct în documente (N05, N09).
+  Și setul de teste poate avea greșeli.
+- **Teste de regresie:** T01 (concediu parental) și T02 („Where do I get my salay?”, cu tot cu greșeala de tipar) vin din
+  erorile găsite prin testare exploratorie. Odată găsită, o eroare devine test permanent.
+- **Coloane în engleză:** consecvent cu restul proiectului. Fără diacritice în cod.
+
+### Limite cunoscute ale verificării prin cuvinte-cheie
+- Fals pozitiv: N04 caută „2”, care poate apărea și într-un răspuns greșit.
+- Fals negativ: la întrebările ambigue, un răspuns bun de tipul „Ce document anume?” nu conține cifrele căutate.
+→ De aceea adaug la pasul 6 și LLM-as-judge.
+
+### Alternative luate în calcul
+- **Mai multe întrebări (100+):** statistic mai solid, dar mai greu de verificat manual și consumă limita gratuită.
+  20 e suficient pentru un prototip.
+- **Întrebări generate automat de un LLM:** rapid, dar baremul ar trebui oricum verificat de un om, iar capcanele n-ar fi
+  gândite pe golurile reale din documente.
